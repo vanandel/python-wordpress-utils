@@ -1,0 +1,8 @@
+build
+dist
+wordpress_utils.egg-info
+python_wordpress_utils.egg-info
+python-wordpress-utils.wpr
+python-wordpress-utils.wpu
+wordpress_utils/wp-config.cfg
+test/wp-config.cfg
