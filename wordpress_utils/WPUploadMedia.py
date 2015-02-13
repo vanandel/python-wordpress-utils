@@ -26,6 +26,20 @@ class WPUploadMedia:
                              self.username,
                              config.get('wordpress', 'password'))
 
+    def uploadFile(self, date_str, file, verbose=False):
+        if verbose: print "starting encoding ", file
+        suffix = os.path.splitext(file)[1]
+        data = {'name': date_str+suffix}
+        data['type'] = mimetypes.guess_type(file)[0]         
+        # read the binary file and let the XMLRPC library encode it into base64        
+        with open(file, 'rb') as f:
+            data['bits'] = xmlrpc_client.Binary(f.read())  
+    
+        if verbose: print "encoding complete - starting upload"
+    
+        response = self.client.call(media.UploadFile(data))
+        if verbose: print "upload complete"
+        return response['url']
 
     def uploadMedia(self, presenter, title, reference, date_str, media_fname):
         pages = self.client.call(posts.GetPosts({'post_type': 'page', 'id' : self.pageid}))
@@ -33,29 +47,45 @@ class WPUploadMedia:
            # print p.title
             #print p.id
             if p.id == self.pageid:
-                # upload the audio/video file first
-                suffix = os.path.splitext(media_fname)[1]
-                data = {'name': date_str+suffix}
-                data['type'] = mimetypes.guess_type(media_fname)[0] 
-                # read the binary file and let the XMLRPC library encode it into base64
-                print "starting encoding"
-                with open(media_fname, 'rb') as f:
-                    data['bits'] = xmlrpc_client.Binary(f.read())  
+                # upload the audio/video file
                 
-                print "encoding complete - starting upload"
-                    
-                response = self.client.call(media.UploadFile(data))
-                print "upload complete"
-                
-                print p.content
+                media_url = self.uploadFile(date_str, media_fname)
                
                 template = """<p align="left">{0} : {1} - {2} - {3} <a href="{4}">Play MP3</a></p>"""
-                line = template.format(date_str, presenter, title, reference, response['url'])
+                line = template.format(date_str, presenter, title, reference, media_url)
                 # put new content at the front.
                 p.content = line + p.content
                 p.post_status = 'publish'               
                 
-                self.client.call(posts.EditPost(p.id, p))                
+                self.client.call(posts.EditPost(p.id, p))
+                
+    
+        
+                
+    def uploadMedia2(self, date_str, label,  media_fname, notes_file):
+        pages = self.client.call(posts.GetPosts({'post_type': 'page', 'id' : self.pageid}))
+        for p in pages:
+            # print p.title
+            #print p.id
+            if p.id == self.pageid:
+                # upload the audio/video file first
+                
+                mp3_url = self.uploadFile(date_str, media_fname, verbose=True)
+
+    
+                #print p.content
+                if notes_file:
+                    # if we have a notes file, upload it.
+                    pdf_url = self.uploadFile(date_str, notes_file)
+                    line = """<p align="left">{0}  <a href="{1}">Play MP3</a><a href="{2}">; Discussion Questions</a></p>""".format(label, mp3_url, pdf_url)
+                else:
+                    line = """<p align="left">{0}  <a href="{1}">Play MP3</a></p>""".format(label, mp3_url)
+                
+                # put new content at the end.
+                p.content = p.content + line
+                p.post_status = 'publish'               
+    
+                self.client.call(posts.EditPost(p.id, p))       
 
 
 if __name__ == '__main__':

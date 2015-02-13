@@ -1,5 +1,6 @@
 build
 dist
+*.pyc
 wordpress_utils.egg-info
 python_wordpress_utils.egg-info
 python-wordpress-utils.wpr
