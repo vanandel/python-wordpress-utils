@@ -85,8 +85,17 @@ class WPUploadMedia:
                 p.content = p.content + line
                 p.post_status = 'publish'               
     
-                self.client.call(posts.EditPost(p.id, p))       
-
+                self.client.call(posts.EditPost(p.id, p))  
+                
+    def getContent(self):
+        pages = self.client.call(posts.GetPosts({'post_type': 'page', 'id' : self.pageid}))
+        for p in pages:
+            # print p.title
+            #print p.id
+            if p.id == self.pageid:
+                return p.content
+            
+        return None
 
 if __name__ == '__main__':
     h = WPUploadMedia()

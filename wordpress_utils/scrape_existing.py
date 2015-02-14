@@ -21,6 +21,12 @@ def scrapeit(url):
     soup = BeautifulSoup(data,'lxml')
     lines = soup.find_all('p')
     
+    # fetch new content, find last entry
+    content = wpu.getContent()
+    earliestLine = BeautifulSoup(content,'lxml').findAll('p')[-1]
+    earliestDate = earliestLine.text.split()[0]
+    
+    
     for l in lines:
         t = tuple(l.children)
         if 2 <= len(t) and len(t) <=4:
@@ -36,6 +42,10 @@ def scrapeit(url):
             # transform MM-DD-YY to ISO date: 2015-01-04
             mmddyy = os.path.basename(link)[0:-4].split('-')
             iso_date_str = "20{0}-{1}-{2}".format(mmddyy[2], mmddyy[0], mmddyy[1])
+            if iso_date_str >= earliestDate:
+                print 'Skipping ', iso_date_str
+                continue
+                
             desc = iso_date_str + " " + desc
         
             
