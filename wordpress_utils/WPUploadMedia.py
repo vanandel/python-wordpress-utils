@@ -41,23 +41,35 @@ class WPUploadMedia:
         if verbose: print "upload complete"
         return response['url']
 
-    def uploadMedia(self, presenter, title, reference, date_str, media_fname):
-        pages = self.client.call(posts.GetPosts({'post_type': 'page', 'id' : self.pageid}))
-        for p in pages:
-           # print p.title
-            #print p.id
-            if p.id == self.pageid:
-                # upload the audio/video file
-                
-                media_url = self.uploadFile(date_str, media_fname)
-               
-                template = """<p align="left">{0} : {1} - {2} - {3} <a href="{4}">Play MP3</a></p>"""
-                line = template.format(date_str, presenter, title, reference, media_url)
-                # put new content at the front.
-                p.content = line + p.content
-                p.post_status = 'publish'               
-                
-                self.client.call(posts.EditPost(p.id, p))
+    def uploadMedia(self, presenter, title, reference, date_str, media_fname, verbose=False):
+	offset = 0
+	increment = 5 #20
+	while True:
+            if verbose:
+		print "GetPosts(number=", increment, "offset = ", offset, ")"
+	    pages = self.client.call(posts.GetPosts({'number': increment, 
+		'offset': offset,'post_type': 'page'}))
+	    offset += increment
+	    #pages = self.client.call(posts.GetPosts({'post_type': 'page'}))
+#		'post_type': 'page', 'id' : self.pageid}))
+	    if len(pages) == 0:
+		print 'No more pages'
+		break
+	    for p in pages:
+		if verbose:
+		    print "Title = ", p.title, "Id =",  p.id
+		if p.id == self.pageid:
+		    if verbose: print "calling self.uploadFile()"
+		    # upload the audio/video file
+		    media_url = self.uploadFile(date_str, media_fname, verbose)
+		   
+		    template = """<p align="left">{0} : {1} - {2} - {3} <a href="{4}">Play MP3</a></p>"""
+		    line = template.format(date_str, presenter, title, reference, media_url)
+		    # put new content at the front.
+		    p.content = line + p.content
+		    p.post_status = 'publish'               
+		    
+		    return self.client.call(posts.EditPost(p.id, p))
                 
     
         
@@ -65,8 +77,7 @@ class WPUploadMedia:
     def uploadMedia2(self, date_str, label,  media_fname, notes_file):
         pages = self.client.call(posts.GetPosts({'post_type': 'page', 'id' : self.pageid}))
         for p in pages:
-            # print p.title
-            #print p.id
+            print "Title = ", p.title, "Id =",  p.id
             if p.id == self.pageid:
                 # upload the audio/video file first
                 
@@ -85,7 +96,7 @@ class WPUploadMedia:
                 p.content = p.content + line
                 p.post_status = 'publish'               
     
-                self.client.call(posts.EditPost(p.id, p))  
+                return self.client.call(posts.EditPost(p.id, p))  
                 
     def getContent(self):
         pages = self.client.call(posts.GetPosts({'post_type': 'page', 'id' : self.pageid}))
