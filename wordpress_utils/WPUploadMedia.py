@@ -15,13 +15,15 @@ class WPUploadMedia:
 
     def __init__(self):
         config = ConfigParser()
+        print 'opening wp-config.cfg from ', os.getcwd()
         with open('wp-config.cfg', 'r') as f:
             config.readfp(f)
 
         self.xmlrpc_url = config.get('wordpress', 'url')
         self.username = config.get('wordpress', 'username')
         self.userid = config.get('wordpress', 'userid')
-        self.pageid = config.get('wordpress', 'pageid')
+        self.post_title = config.get('wordpress', 'post_title')
+        self.feed_category = config.get('wordpress', 'feed_category')
         self.client = Client(self.xmlrpc_url,
                              self.username,
                              config.get('wordpress', 'password'))
@@ -45,45 +47,49 @@ class WPUploadMedia:
     def createMP3Post(self, presenter, title, reference, date_str, media_url, verbose=False):
         if verbose:
             print 'createMP3Post starting'
-        
-        
+
+
         post = WordPressPost()
         titleTemplate = u"""{0} : {1} - {2}"""
         #title = title.encode('ascii','ignore')
         post.title = titleTemplate.format(date_str, presenter, title)
-        
+
         template = u"""<a href="{4}">{0} : {1} - {2} - {3}</a>"""
         post.content = template.format(date_str, presenter, title, reference, media_url)
         post.post_status = 'publish'
-        # set the category to podcast so this Post is put in our 'podcast' feed
-        post.terms_names = {'category': ['podcasts']}
+        # set the category so this Post is inserted into our 'podcast' feed
+        post.terms_names = {'category': [self.feed_category,]}
         post.post_format = 'Link'
 
         #term = WordPressTerm()
         #post.terms = [term,]
-        retVal = self.client.call(posts.NewPost(post))
-        if verbose:
-            print 'createMP3Post complete'
-        return retVal
+        retval = None
+        try:
+            retVal = self.client.call(posts.NewPost(post))
+        except Exception as inst:
+            print 'createMP3Post: posts.NewPost() failed', inst
+        else:
+            if verbose:
+                print 'createMP3Post complete'
+            return retVal
 
     def uploadMedia(self, presenter, title, reference, date_str, media_fname, verbose=False):
         offset = 0
         increment = 5 #20
+        print 'self.post_title = ', self.post_title, ' type(self.post_title)  = ', type(self.post_title)
         while True:
             if verbose:
                 print "GetPosts(number=", increment, "offset = ", offset, ")"
             pages = self.client.call(posts.GetPosts({'number': increment, 
                                                      'offset': offset,'post_type': 'page'}))
             offset += increment
-            #pages = self.client.call(posts.GetPosts({'post_type': 'page'}))
-#		'post_type': 'page', 'id' : self.pageid}))
             if len(pages) == 0:
                 print 'No more pages'
                 break
             for p in pages:
                 if verbose:
-                    print "Title = ", p.title, "Id =",  p.id
-                if p.id == self.pageid:
+                    print "Title = '", p.title, "' Id =",  p.id, 'type(p.title)', type(p.title)
+                if p.title == self.post_title:
                     if verbose: print "calling self.uploadFile()"
                     # upload the audio/video file
                     media_url = self.uploadFile(date_str, media_fname, verbose)
@@ -93,20 +99,32 @@ class WPUploadMedia:
                     # put new content at the front.
                     p.content = line + p.content
                     p.post_status = 'publish'               
+                    # magic : avoid 'Invalid attachment ID.' exception from EditPost
+                    p.thumbnail = None  
+                    if verbose: 
+                        print 'upload complete, url = ', media_url, 'adding line=', line
+                        print 'post = ', p
 
-                    self.client.call(posts.EditPost(p.id, p))
-                    if verbose: print 'post.EditPost complete'
 
-                    return self.createMP3Post(presenter, title, reference, date_str, media_url, verbose)
+                    try:
+                        self.client.call(posts.EditPost(p.id, p))
+                        if verbose: print 'post.EditPost complete'
+                    except Exception as inst:
+                        print 'uploadMedia: posts.EditPost() failed', inst
+                        return None
+                    else:
+                        return None # until we get podcasts working again.
+                        return self.createMP3Post(presenter, title, reference, date_str, media_url, verbose)
+
 
 
 
 
     def uploadMedia2(self, date_str, label,  media_fname, notes_file):
-        pages = self.client.call(posts.GetPosts({'post_type': 'page', 'id' : self.pageid}))
+        pages = self.client.call(posts.GetPosts({'post_type': 'page', 'title' : self.post_title}))
         for p in pages:
             print "Title = ", p.title, "Id =",  p.id
-            if p.id == self.pageid:
+            if p.title == self.post_title:
                 # upload the audio/video file first
 
                 mp3_url = self.uploadFile(date_str, media_fname, verbose=True)
@@ -138,5 +156,6 @@ class WPUploadMedia:
 
 if __name__ == '__main__':
     h = WPUploadMedia()
-    h.uploadMedia("Pastor Mark Quist", "The Holy Risk-Taker", "Ruth 3", "2016/10/02", "/Users/vanandel/tmp/2016-10-02.mp3", verbose=True);
-    print 'uploadMedia complete'
+    result = h.uploadMedia("Pastor Mark Quist", "Biblical WorldView", "Genesis 1", "2016/12-22", 
+                           "../test_audio/2016-09-11.mp3", verbose=True)
+    print 'uploadMedia complete returned', result

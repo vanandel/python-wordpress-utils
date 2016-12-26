@@ -16,6 +16,7 @@ You will need to create a wp-config.cfg file of the form::
   username = your_user_name
   password = your_password
   userid = 1
-  pageid = 200
+  post_title =Messages By Date
+  feed_category=Pastor Mark's Weekly Podcasts
 
 Please see docs for more information: http://python-wordpress-utils.rtfd.org
