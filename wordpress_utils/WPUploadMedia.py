@@ -1,4 +1,4 @@
-import os,os.path
+import os,os.path,sys
 import mimetypes
 
 from wordpress_xmlrpc import Client, WordPressPost, WordPressPage
@@ -54,7 +54,7 @@ class WPUploadMedia:
         #title = title.encode('ascii','ignore')
         post.title = titleTemplate.format(date_str, presenter, title)
 
-        template = u"""<a href="{4}">{0} : {1} - {2} - {3}</a>"""
+        template = u"""[audio  "{4}" ]<p>{0} : {1} - {2} - {3}</p>"""
         post.content = template.format(date_str, presenter, title, reference, media_url)
         post.post_status = 'publish'
         # set the category so this Post is inserted into our 'podcast' feed
@@ -94,7 +94,7 @@ class WPUploadMedia:
                     # upload the audio/video file
                     media_url = self.uploadFile(date_str, media_fname, verbose)
 
-                    template = """<p align="left">{0} : {1} - {2} - {3} <a href="{4}">Play MP3</a></p>"""
+                    template = """<p align="left">{0} : {1} - {2} - {3} <a href="{4}">Play MP3</a></p>\n"""
                     line = template.format(date_str, presenter, title, reference, media_url)
                     # put new content at the front.
                     p.content = line + p.content
@@ -113,7 +113,6 @@ class WPUploadMedia:
                         print 'uploadMedia: posts.EditPost() failed', inst
                         return None
                     else:
-                        return None # until we get podcasts working again.
                         return self.createMP3Post(presenter, title, reference, date_str, media_url, verbose)
 
 
@@ -156,6 +155,24 @@ class WPUploadMedia:
 
 if __name__ == '__main__':
     h = WPUploadMedia()
-    result = h.uploadMedia("Pastor Mark Quist", "Biblical WorldView", "Genesis 1", "2016/12-22", 
+    presenter='Pastor Mark Quist'
+    title = "still more testing"
+    reference = "Genesis 4"
+    date_str =  "2017-01-01"
+    media_url =  "https://crestviewchurch.files.wordpress.com/2016/12/2016-12-241.mp3"
+    if len(sys.argv) > 1 and sys.argv[1] == 'podcast' :
+        result = h.createMP3Post(presenter, title, reference, date_str, 
+                                media_url, verbose=True)
+        
+        title = "testing #2"
+        reference = "Genesis 2"
+        date_str =  "2016-12-31"        
+        print 'createMP3Post() returned', result
+        result = h.createMP3Post(presenter, title, reference, date_str, 
+                                 media_url, verbose=True)   
+        print 'createMP3Post() returned', result
+    else:
+    
+        result = h.uploadMedia(presenter,title ,reference,date_str, 
                            "../test_audio/2016-09-11.mp3", verbose=True)
-    print 'uploadMedia complete returned', result
+        print 'uploadMedia() complete returned', result
