@@ -58,7 +58,7 @@ class WPUploadMedia:
 
         post = WordPressPost()
         titleTemplate = u"""Podcast : {0} : {1} - {2}"""
-        #title = title.encode('ascii','ignore')
+        title = title.encode('ascii','ignore')
         post.title = titleTemplate.format(date_str, presenter, title)
 
         template = u"""[audio  "{4}" ]<p>{0} : {1} - {2} - {3}</p>"""
