@@ -6,17 +6,24 @@ from wordpress_xmlrpc.methods.posts import GetPosts, NewPost
 from wordpress_xmlrpc.methods.users import GetUserInfo
 from wordpress_xmlrpc.methods import posts,media
 from wordpress_xmlrpc.compat import xmlrpc_client
+import requests
 
 
 from wordpress_xmlrpc.compat import ConfigParser
 
+def fetchfile(url, output_fname, chunksize= 65536):
+    r = requests.get(url, stream = True)
+    with open(output_fname, 'wb') as fd:
+        for chunk in r.iter_content(chunksize):
+            fd.write(chunk) 
+        #print 'finished writing ', output_fname
 
 class WPUploadMedia:
 
-    def __init__(self):
+    def __init__(self, configFile='wp-config.cfg'):
         config = ConfigParser()
-        print 'opening wp-config.cfg from ', os.getcwd()
-        with open('wp-config.cfg', 'r') as f:
+        print 'opening {0} from {1}'.format(configFile,os.getcwd())
+        with open(configFile, 'r') as f:
             config.readfp(f)
 
         self.xmlrpc_url = config.get('wordpress', 'url')
@@ -50,7 +57,7 @@ class WPUploadMedia:
 
 
         post = WordPressPost()
-        titleTemplate = u"""{0} : {1} - {2}"""
+        titleTemplate = u"""Podcast : {0} : {1} - {2}"""
         #title = title.encode('ascii','ignore')
         post.title = titleTemplate.format(date_str, presenter, title)
 
@@ -73,7 +80,7 @@ class WPUploadMedia:
                 print 'createMP3Post complete'
             return retVal
 
-    def uploadMedia(self, presenter, title, reference, date_str, media_fname, verbose=False):
+    def uploadMedia(self, presenter, title, reference, date_str, media_fname, createPost=True,verbose=False):
         offset = 0
         increment = 5 #20
         print 'self.post_title = ', self.post_title, ' type(self.post_title)  = ', type(self.post_title)
@@ -95,6 +102,8 @@ class WPUploadMedia:
                     media_url = self.uploadFile(date_str, media_fname, verbose)
 
                     template = """<p align="left">{0} : {1} - {2} - {3} <a href="{4}">Play MP3</a></p>\n"""
+                    # strip out characters we don't understand - better than crashing!
+                    title = title.encode('ascii','ignore')
                     line = template.format(date_str, presenter, title, reference, media_url)
                     # put new content at the front.
                     p.content = line + p.content
@@ -113,8 +122,8 @@ class WPUploadMedia:
                         print 'uploadMedia: posts.EditPost() failed', inst
                         return None
                     else:
-                        return self.createMP3Post(presenter, title, reference, date_str, media_url, verbose)
-
+                        if createPost: return self.createMP3Post(presenter, title, reference, date_str, media_url, verbose)
+                        return None
 
 
 

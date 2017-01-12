@@ -2,20 +2,13 @@ import requests
 from bs4 import BeautifulSoup
 import os, os.path
 import requests
-from WPUploadMedia import WPUploadMedia
+from WPUploadMedia import WPUploadMedia, fetchfile
 
 
-def fetchfile(url, output_fname, chunksize= 65536):
-    r = requests.get(url, stream = True)
-    with open(output_fname, 'wb') as fd:
-        for chunk in r.iter_content(chunksize):
-            fd.write(chunk) 
-        #print 'finished writing ', output_fname
-
-def scrapeit(url):    
+def scrapeit(url, cfgFile, storage_dir='/tmp', verbose=False):    
 
     #site_prefix = "http://www.crestviewchurch.org/site/"
-    wpu = WPUploadMedia()
+    wpu = WPUploadMedia(cfgFile)
     r = requests.get(url)
     data = r.text
     soup = BeautifulSoup(data,'lxml')
@@ -30,34 +23,41 @@ def scrapeit(url):
         t = tuple(l.children)
         
         if 2== len(t) :
-            print 'tuple = ', t
+           
             ustr = t[0]
             colonIndex = ustr.find(':')
-            print 'colonIndex =', colonIndex
             if colonIndex == -1:
                 continue  # skip lines that don't have 'date : presenter'
             dateStr = ustr[0:colonIndex-1]
-            print 'date =', dateStr 
+
             dash = ustr.find(sep)
-            presenter = ustr[colonIndex+2:dash-1]
+            presenter = ustr[colonIndex+2:dash-1].encode('ascii','ignore')
             print 'presenter =', presenter
             dash2 = ustr.find(sep, dash+1)
-            title = ustr[dash+1:dash2]
-            reference = ustr[dash2+1:-1]
+            # strip out characters we don't understand - better than crashing!
+            title = ustr[dash+1:dash2].encode('ascii','ignore')
+        
+            reference = ustr[dash2+1:-1].encode('ascii','ignore')
+            if verbose: 
+                print 'tuple = ', t
+                print ' date =', dateStr, ' presenter =', presenter, ' title = ', title, ' reference = ', reference
            
             # well-formed entry has an MP3
             if t[1].has_attr('href'):
                 link = t[1]['href']
+                mp3FileName = os.path.join(os.path.abspath(os.path.expanduser(storage_dir)),dateStr+ ".mp3")
+                if verbose: print("fetching {0} to {1}".format(link,mp3FileName))
+                fetchfile(link, mp3FileName)
+                if verbose: print("finished downloading {0} to {1}".format(link,mp3FileName))
+                wpu.uploadMedia(presenter, title, reference,dateStr,mp3FileName, createPost=False, verbose=verbose)                 
             else:
                 continue
 
-            
-            wpu.createMP3Post(presenter, title, reference, dateStr, link)
 
 
 
 
 if __name__ == '__main__':
-    url = "http://www.crestviewchurch.org/messages/messages-by-date"
-    scrapeit(url)
+    url = "https://crestview3665.wordpress.com/messages/"
+    scrapeit(url, "temp_wp-config.cfg", "~/tmp/Crestview_2016_mp3",verbose=True)
 
