@@ -2,8 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 import os, os.path
 import requests
-from WPUploadMedia import WPUploadMedia, fetchfile
+from WPUploadMedia import WPUploadMedia
 
+def fetchfile(url, output_fname, chunksize= 65536):
+    r = requests.get(url, stream = True)
+    with open(output_fname, 'wb') as fd:
+        for chunk in r.iter_content(chunksize):
+            fd.write(chunk) 
+        #print 'finished writing ', output_fname
 
 def scrapeit(url, cfgFile, storage_dir='/tmp', verbose=False):    
 

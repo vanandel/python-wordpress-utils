@@ -6,17 +6,11 @@ from wordpress_xmlrpc.methods.posts import GetPosts, NewPost
 from wordpress_xmlrpc.methods.users import GetUserInfo
 from wordpress_xmlrpc.methods import posts,media
 from wordpress_xmlrpc.compat import xmlrpc_client
-import requests
 
 
 from wordpress_xmlrpc.compat import ConfigParser
 
-def fetchfile(url, output_fname, chunksize= 65536):
-    r = requests.get(url, stream = True)
-    with open(output_fname, 'wb') as fd:
-        for chunk in r.iter_content(chunksize):
-            fd.write(chunk) 
-        #print 'finished writing ', output_fname
+
 
 class WPUploadMedia:
 
