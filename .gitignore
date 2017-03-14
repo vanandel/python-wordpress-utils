@@ -7,3 +7,7 @@ python-wordpress-utils.wpr
 python-wordpress-utils.wpu
 wordpress_utils/wp-config.cfg
 test/wp-config.cfg
+wordpress-utils.wpr
+wordpress-utils.wpu
+wordpress_utils/.ipynb_checkpoints/
+wordpress-utils.wpu
