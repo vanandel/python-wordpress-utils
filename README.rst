@@ -1,12 +1,11 @@
 Overview
 ========
 
-Python utilities using the WordPress blog's [XML-RPC API] (http://codex.wordpress.org/XML-RPC_Support)
+Python utilities using the WordPress blog's _XML-RPC API:http://codex.wordpress.org/XML-RPC_Support
 
 This library was developed against and tested on WordPress 3.5.
 This library is compatible with Python 2.6+ and 3.2+.
-This library depends on the [python-wordpress-xmlrpc] 
-(https://github.com/maxcutler/python-wordpress-xmlrpc) library
+This library depends on the _python-wordpress-xmlrpc:https://github.com/maxcutler/python-wordpress-xmlrpc library
 
 You will need to create a wp-config.cfg file of the form::
 
