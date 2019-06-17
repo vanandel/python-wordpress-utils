@@ -53,7 +53,8 @@ class WPUploadMedia:
         post = WordPressPost()
         titleTemplate = u"""Podcast : {0} : {1} - {2}"""
         title = title.encode('ascii','ignore')
-        post.title = titleTemplate.format(date_str, presenter, title)
+        #post.title = titleTemplate.format(date_str, presenter, title)
+        post.title = "generic title"
 
         template = u"""[audio  "{4}" ]<p>{0} : {1} - {2} - {3}</p>"""
         post.content = template.format(date_str, presenter, title, reference, media_url)
@@ -62,10 +63,10 @@ class WPUploadMedia:
         post.terms_names = {'category': [self.feed_category,]}
         post.post_format = 'Link'
 
-        #term = WordPressTerm()
-        #post.terms = [term,]
         retval = None
         try:
+            print ' post = ', post
+            print 'post.content =', post.content
             retVal = self.client.call(posts.NewPost(post))
         except Exception as inst:
             print 'createMP3Post: posts.NewPost() failed', inst
@@ -167,10 +168,11 @@ if __name__ == '__main__':
         result = h.createMP3Post(presenter, title, reference, date_str, 
                                 media_url, verbose=True)
         
+        print 'createMP3Post() returned', result
+        exit(0)
         title = "testing #2"
         reference = "Genesis 2"
         date_str =  "2016-12-31"        
-        print 'createMP3Post() returned', result
         result = h.createMP3Post(presenter, title, reference, date_str, 
                                  media_url, verbose=True)   
         print 'createMP3Post() returned', result

@@ -11,3 +11,6 @@ wordpress-utils.wpr
 wordpress-utils.wpu
 wordpress_utils/.ipynb_checkpoints/
 wordpress-utils.wpu
+*.py~
+
+wp-config.cfg
