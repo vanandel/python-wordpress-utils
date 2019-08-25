@@ -53,8 +53,7 @@ class WPUploadMedia:
         post = WordPressPost()
         titleTemplate = u"""Podcast : {0} : {1} - {2}"""
         title = title.encode('ascii','ignore')
-        #post.title = titleTemplate.format(date_str, presenter, title)
-        post.title = "generic title"
+        post.title = titleTemplate.format(date_str, presenter, title)
 
         template = u"""[audio  "{4}" ]<p>{0} : {1} - {2} - {3}</p>"""
         post.content = template.format(date_str, presenter, title, reference, media_url)
@@ -159,11 +158,12 @@ class WPUploadMedia:
 
 if __name__ == '__main__':
     h = WPUploadMedia()
-    presenter='Pastor Mark Quist'
+    presenter='Not Really Mark Quist'
     title = "still more testing"
-    reference = "Genesis 4"
-    date_str =  "2017-01-01"
+    reference = "Hezekiah 13"
+    date_str =  "2019-08-31"
     media_url =  "https://crestviewchurch.files.wordpress.com/2016/12/2016-12-241.mp3"
+    mp3_filename = "2019-06-16.mp3"
     if len(sys.argv) > 1 and sys.argv[1] == 'podcast' :
         result = h.createMP3Post(presenter, title, reference, date_str, 
                                 media_url, verbose=True)
@@ -179,5 +179,6 @@ if __name__ == '__main__':
     else:
     
         result = h.uploadMedia(presenter,title ,reference,date_str, 
-                           "../test_audio/2016-09-11.mp3", verbose=True)
+            mp3_filename, verbose=True)
+
         print 'uploadMedia() complete returned', result

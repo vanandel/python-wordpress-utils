@@ -14,3 +14,6 @@ wordpress-utils.wpu
 *.py~
 
 wp-config.cfg
+wordpress_utils/.WPUploadMedia.py.un~
+*.mp3
+*.swp
